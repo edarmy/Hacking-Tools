@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Port Scanner</title>
+    <style>
+        body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+    color: #333;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+}
+
+.container {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+h1 {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+}
+
+label {
+    margin-bottom: 5px;
+}
+
+input {
+    padding: 10px;
+    margin-bottom: 15px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+button {
+    padding: 10px;
+    background-color: #007BFF;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #0056b3;
+}
+
+#results {
+    margin-top: 20px;
+}
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Port Scanner</h1>
+        <form id="scan-form">
+            <label for="host">Host (IP Address):</label>
+            <input type="text" id="host" placeholder="Enter IP address" required>
+
+            <label for="port-range">Port Range:</label>
+            <input type="text" id="port-range" placeholder="1-65535" value="1-65535">
+
+            <button type="submit">Scan</button>
+        </form>
+        <div id="error-message"></div>
+        <div id="results"></div>
+    </div>
+    <script>
+        document.getElementById('scan-form').addEventListener('submit', function(event) {
+    event.preventDefault();
+
+    const host = document.getElementById('host').value.trim();
+    const portRange = document.getElementById('port-range').value.trim();
+    const errorMessage = document.getElementById('error-message');
+    const resultsDiv = document.getElementById('results');
+    
+    // Clear previous results and error messages
+    resultsDiv.innerHTML = '';
+    errorMessage.innerHTML = '';
+
+    // Validate IP address
+    if (!isValidIP(host)) {
+        errorMessage.textContent = 'Please enter a valid IP address.';
+        errorMessage.style.color = 'red';
+        return;
+    }
+
+    const [startPort, endPort] = portRange.split('-').map(Number);
+
+    for (let port = startPort; port <= endPort; port++) {
+        scanPort(host, port);
+    }
+});
+
+function isValidIP(ip) {
+    const regex = /^(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\.(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\.(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\.(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])$/;
+    return regex.test(ip);
+}
+
+function scanPort(host, port) {
+    // Create a new RTCPeerConnection
+    const pc = new RTCPeerConnection({
+        iceServers: []
+    });
+
+    // Create a data channel
+    const dataChannel = pc.createDataChannel("test");
+
+    dataChannel.onerror = () => {
+        console.log(`Port ${port} is closed.`);
+    };
+
+    dataChannel.onopen = () => {
+        console.log(`Port ${port} is open.`);
+        dataChannel.close();
+    };
+
+    // Create an SDP offer to initialize WebRTC connection
+    pc.createOffer().then(offer => {
+        pc.setLocalDescription(offer);
+
+        // Modify the SDP to attempt to connect to the specified port
+        const modifiedSDP = offer.sdp.replace(/a=candidate/g, `a=candidate:1 1 UDP 2130706431 ${host} ${port} typ host`);
+
+        const modifiedOffer = new RTCSessionDescription({
+            type: 'offer',
+            sdp: modifiedSDP
+        });
+
+        return pc.setLocalDescription(modifiedOffer);
+    }).catch(error => {
+        console.error(error);
+    });
+}
+
+    </script>
+</body>
+</html>

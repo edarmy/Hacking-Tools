@@ -1,7 +1,8 @@
 # DNS Enmaration tool using dnspython
-# Author: 
-# Date: [Today's Date]
-# Version: 1.0
+#!/bin/python
+# Author: DEADARMY
+# Date: 30/10/2024
+# Version: 2.0
 
 import dns.resolver #resolve all record
 import dns.reversename
@@ -44,6 +45,7 @@ resolver = dns.resolver.Resolver()
 for record_type in record_types:
     try:
        answers = resolver.resolve(target_domain, record_type)
+       
     except dns.resolver.NoAnswer:
         continue
     except Exception as e:
@@ -56,11 +58,12 @@ for record_type in record_types:
             Arecord.append(str(rdata))
 
 get_srv_records(target_domain, service, protocol)
-ptr_records = get_ptr_from_ip(Arecord[0])
 
+ptr_records = get_ptr_from_ip(Arecord[0])
 for record in ptr_records:
     print(f'\n[++]DNS Record Found: {target_domain}:PTR\n===========================================================')
     print(record)
+
 print(f"\n[--] NO More Records Found")
 
 
