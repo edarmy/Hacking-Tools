@@ -7,7 +7,7 @@
 import dns.resolver #resolve all record
 import dns.reversename
 
-target_domain="google.com"
+target_domain="yalamanchili.in"
 service = "ldap"
 protocol = "tcp"
 
